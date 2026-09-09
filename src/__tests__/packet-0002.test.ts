@@ -59,7 +59,9 @@ describe("저장소 코어 유틸 (안전 read/write, ID 폴백)", () => {
       const result = safeWrite("nwp:test", { value: 100 });
 
       expect(result.ok).toBe(false);
-      expect(result.error).toBe("저장 공간이 부족해요. 오래된 항목을 삭제해주세요");
+      if (!result.ok) {
+        expect(result.error).toBe("저장 공간이 부족해요. 오래된 항목을 삭제해주세요");
+      }
     });
 
     it("does not modify existing value when QuotaExceededError occurs", () => {
