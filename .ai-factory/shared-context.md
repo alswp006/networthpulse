@@ -288,3 +288,91 @@ CRITICAL: Before creating any new function, type, or component, check the list a
 - 0011: 자산 목록 — 삭제 AlertDialog · Toast · 수정 진입 (files: src/components/AssetRowActions.tsx, src/components/ToastHost.tsx)
 - 0014: 추이 화면 — SVG 라인차트 + 엣지케이스 (files: src/components/NetWorthChart.tsx)
 - 0017: 리포트 본문 — 배분 Card · 진단 Card · AdSlot (files: src/components/ReportBody.tsx)
+
+## Available exports from existing files
+// src/App.tsx
+export default function App() {
+
+// src/components/AdSlot.tsx
+export function AdSlot({ adGroupId, className, variant, theme }: AdSlotProps) {
+
+// src/components/Amount.tsx
+export function Amount({
+
+// src/components/AssetRowActions.tsx
+export default function AssetRowActions({ asset }: { asset: Asset }) {
+
+// src/components/BadgeCelebrationSheet.tsx
+export function BadgeCelebrationSheet() {
+
+// src/components/BottomCTA.tsx
+export function SubmitFooter({
+export function ButtonStack({
+
+// src/components/Card.tsx
+export function Card({
+
+// src/components/CheckInBanner.tsx
+export function CheckInBanner() {
+
+// src/components/CountUp.tsx
+export function CountUp({
+
+// src/components/FloatingTabBar.tsx
+export type TabItem = {
+export function FloatingTabBar({ items }: { items: TabItem[] }) {
+
+// src/components/GoalMiniCard.tsx
+export function GoalMiniCard() {
+
+// src/components/MiniBar.tsx
+export function MiniBar({
+
+// src/components/NetWorthChart.tsx
+export function NetWorthChart({ data }: { data: NetWorthSnapshot[] }) {
+
+// src/components/PageShell.tsx
+export function PageShell({ children, style }: { children: ReactNode; style?: CSSProperties }) {
+
+// src/components/ReportBody.tsx
+export function ReportBody({ summary, diagnosis }: ReportBodyProps) {
+
+// src/components/ScreenScaffold.tsx
+export function ScreenScaffold({
+
+// src/components/Sparkline.tsx
+export function Sparkline({
+
+// src/components/StateView.tsx
+export function EmptyState({
+export function LoadingState({
+
+// src/components/SummaryHero.tsx
+export function SummaryHero({
+
+// src/components/ToastHost.tsx
+export const TOAST_MESSAGES = {
+export type ToastKind = keyof typeof TOAST_MESSAGES;
+export function ToastHost() {
+
+// src/components/TossPurchase.tsx
+export interface TossPurchaseResult {
+export function TossPurchase({
+
+// src/components/TossRewardAd.tsx
+export function TossRewardAd({
+
+// src/lib/calc/diagnose.ts
+export function diagnose(summary: NetWorthSummary): DiagnosisItem[] {
+export funct
+
+## Memory Index (자동 학습 — 힌트로만 사용, 실제 코드 확인 필수)
+
+Available topics: deploy(3), general(12), testing(1), ui(1)
+
+Key lessons (verify against actual code before applying):
+- [general] 화면·라우팅 등 소비자 모듈은 그것이 import하는 생산자 모듈이 병합된 뒤에만 병합하고, 순서를 지킬 수 없으면 소비자 병합과 동시에 최소 플레이스홀더를 만들어 매 병합 직후 타입체크와 빌드가 항상 통과하도록 유지하라. (60% · 타 앱 1회 — 맹신 금지)
+- [general] 전역 라우팅·탭바·Provider 배선은 개별 화면보다 먼저(초반 20% 안에) 완료하고 미구현 화면은 스텁 라우트로 연결해, 시간 예산이 소진돼도 앱이 항상 실행 가능한 상태를 유지하라. (60% · 타 앱 1회 — 맹신 금지)
+- [general] 저장·데이터 접근 등 기반 계층 패킷은 이를 import 하는 화면 패킷보다 반드시 먼저 완료·병합하고, 미완료면 상위 화면 패킷 병합을 차단하라 — 빈 기반 모듈 하나가 전 라우트 스모크를 무너뜨린다. (60% · 타 앱 1회 — 맹신 금지)
+- [general] 외부에서 들어온 모든 값(라우터 state, 로컬 저장소, 부분 입력 폼)은 사용 직전에 배열·객체 기본값으로 정규화하고, 테이블/맵 조회 결과는 존재 확인 후에만 하위 속성이나 length에 접근하라. (60% · 타 앱 1회 — 맹신 금지)
+- [general] 의존 그래프 최하층의 타입·계약 파일은 런타임 코드 0줄의 순수 선언으로 가장 먼저 단독 타입체크를 통과시키고, 파일 생성은 셸 명령이 아닌 허용된 편집 도구로만 하게 강제하라. (60% · 타 앱 1회 — 맹신 금지)
