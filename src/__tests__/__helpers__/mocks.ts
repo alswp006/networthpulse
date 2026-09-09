@@ -16,7 +16,12 @@ import React from "react";
 import { vi } from "vitest";
 
 export const mockNavigate = vi.fn();
-export const mockLocation = { pathname: "/", search: "", state: null, key: "default" };
+export const mockLocation: { pathname: string; search: string; state: unknown; key: string } = {
+  pathname: "/",
+  search: "",
+  state: null,
+  key: "default",
+};
 
 // ── TDS (@toss/tds-mobile) ──
 // TDS components use CSS-in-JS + layout hooks that crash in jsdom.
