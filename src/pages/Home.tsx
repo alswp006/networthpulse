@@ -1,92 +1,143 @@
-import { Top, Paragraph, Spacing, ListRow, Button } from '@toss/tds-mobile';
+import { Top, Button, Paragraph, Spacing, ListRow, Skeleton, Asset } from '@toss/tds-mobile';
 import { useNavigate } from 'react-router-dom';
+import { generateHapticFeedback } from '@apps-in-toss/web-framework';
 import { ScreenScaffold } from '../components/ScreenScaffold';
 import { SummaryHero } from '../components/SummaryHero';
 import { Card } from '../components/Card';
-import { CheckInBanner } from '../components/CheckInBanner';
-import { GoalMiniCard } from '../components/GoalMiniCard';
-import { BadgeCelebrationSheet } from '../components/BadgeCelebrationSheet';
-import { AdSlot } from '../components/AdSlot';
+import { CountUp } from '../components/CountUp';
+import { Sparkline } from '../components/Sparkline';
+import { MiniBar } from '../components/MiniBar';
+import { EmptyState } from '../components/StateView';
+import { FloatingTabBar } from '../components/FloatingTabBar';
 import { useAppData } from '@/lib/store';
+import { ASSET_CATEGORIES, CATEGORY_LABEL } from '@/lib/types';
+import type { AssetCategory } from '@/lib/types';
+import { formatSignedKRW, formatPercentage } from '@/lib/format';
 
-/**
- * Golden Home page — 대시보드/탭-루트 골든 레퍼런스.
- *
- * 다른 페이지를 쓸 때 이 패턴을 모방하라:
- * - ScreenScaffold로 감싼다(raw fragment 골격 금지) — safe-area + 100dvh 자동 처리.
- * - 화면 최상단에 SummaryHero로 시각 앵커를 만든다('휑함'의 가장 큰 원인은 앵커 부재).
- *   데이터가 있으면 value에 <Amount value={n} unit="원" typography="t1" />로 핵심 숫자를 크게 박아라.
- * - 1차 진입 액션은 SummaryHero 카드 내부 버튼(display="block", 전체폭)에 둔다.
- *   → 화면 중앙 부유/좌측 글자폭 버튼 금지. 하단 TabBar가 있으면 SubmitFooter와 겹치므로 카드 안에.
- * - 핵심 정보는 raw <div>가 아니라 Card로 묶어 위계를 만든다.
- * - 하단 탭이 필요하면(2~5탭): bottom={<FloatingTabBar items={[{label,path}...]} />}.
- *   ('TDS TabBar'는 존재하지 않는다 — 직접 만들지 말고 FloatingTabBar를 써라.)
- * - 카피는 CLAUDE.md "카피 규칙 — AI 냄새 금지"를 따른다: 기능 나열식 홍보 문구·상투구·
- *   generic 버튼("시작하기") 금지. 이 파일의 예시 문구도 앱 맥락에 맞게 교체 대상이다.
- *
- * Scaffold tokens (replaced by scaffold-toss.ts at project creation):
- *   NetWorthPulse -> the app's display name
- *   예금·주식·부동산·대출을 수동 입력해 순자산 추이와 목표 달성률을 시각화하는 개인 자산 트래커    -> the one-line description
- */
+function safeHaptic() {
+  try {
+    generateHapticFeedback({ type: 'tickWeak' });
+  } catch {
+    /* WebView 밖 — 무시 */
+  }
+}
 
-// ⚠ 이 목록은 골격 예시다 — 앱의 실제 콘텐츠(핵심 지표·최근 기록·바로가기)로 반드시 교체하라.
-// '간편한 사용/빠른 처리' 같은 기능 나열식 홍보 문구는 카피 규칙(CLAUDE.md "AI 냄새 금지") 위반이다.
-// 사용자가 이 화면에서 실제로 확인할 정보를 넣어라 — 아래처럼 데이터가 사는 행으로.
-const HIGHLIGHTS = [
-  { title: '오늘', description: '아직 기록이 없어요' },
-  { title: '이번 주', description: '기록 3건 · 평균 12분' },
+/** 전월 대비 증감을 "+20,000,000원 (+11.1%)" 형식으로 포맷 */
+function formatMomDelta(momDelta: number, netWorth: number): string {
+  const prevNetWorth = netWorth - momDelta;
+  const pct = prevNetWorth !== 0 ? (momDelta / Math.abs(prevNetWorth)) * 100 : 0;
+  return `${formatSignedKRW(momDelta)} (${formatPercentage(pct, { showSign: true })})`;
+}
+
+const TAB_ITEMS = [
+  { label: '홈', path: '/' },
+  { label: '자산', path: '/assets' },
+  { label: '추이', path: '/trend' },
+  { label: '리포트', path: '/report' },
 ];
 
 export default function Home() {
   const navigate = useNavigate();
+  const { loaded, assets, summary, snapshots } = useAppData();
+
+  const goBadges = () => {
+    safeHaptic();
+    navigate('/badges');
+  };
+
+  const goAssets = (filterCategory: AssetCategory) => {
+    safeHaptic();
+    navigate('/assets', { state: { filterCategory } });
+  };
+
+  const top = (
+    <Top
+      title={<Top.TitleParagraph>순자산</Top.TitleParagraph>}
+      right={
+        <Button variant="weak" size="small" onClick={goBadges}>
+          뱃지
+        </Button>
+      }
+    />
+  );
+
+  if (!loaded) {
+    return (
+      <ScreenScaffold top={top}>
+        <div data-testid="hero-skeleton" style={{ height: 96 }}>
+          <Skeleton />
+        </div>
+        <Spacing size={16} />
+        <Card>
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} data-testid="category-skeleton" style={{ height: 56 }}>
+              <Skeleton />
+            </div>
+          ))}
+        </Card>
+        <FloatingTabBar items={TAB_ITEMS} />
+      </ScreenScaffold>
+    );
+  }
+
+  if (assets.length === 0) {
+    return (
+      <ScreenScaffold top={top}>
+        <EmptyState
+          icon={<Asset.ContentIcon name="il_notFound" alt="" />}
+          title="아직 순자산 기록이 없어요"
+          description="첫 자산을 등록하고 순자산을 확인해보세요"
+          action={
+            <Button variant="fill" display="block" onClick={() => navigate('/assets/new')}>
+              자산 추가하기
+            </Button>
+          }
+        />
+        <FloatingTabBar items={TAB_ITEMS} />
+      </ScreenScaffold>
+    );
+  }
+
+  const netWorth = summary?.netWorth ?? 0;
+  const momDelta = summary?.momDelta ?? null;
+  const last6 = snapshots.slice(-6).map((s) => s.netWorth);
 
   return (
-    <ScreenScaffold
-      top={<Top title={<Top.TitleParagraph>NetWorthPulse</Top.TitleParagraph>} />}
-    >
-      {/* 시각 앵커: 헤드라인 + 카드 내 진입 버튼(부유 금지, display="block" 전체폭).
-          데이터 앱이면 value를 <Amount typography="t1" />(핵심 숫자)로 교체하라. */}
+    <ScreenScaffold top={top}>
       <SummaryHero
-        label="NetWorthPulse"
-        value={<Paragraph.Text typography="t2">예금·주식·부동산·대출을 수동 입력해 순자산 추이와 목표 달성률을 시각화하는 개인 자산 트래커</Paragraph.Text>}
-        caption="로그인 없이 바로 쓸 수 있어요"
-        action={
-          // 라벨은 앱의 핵심 행동 동사로 교체하라 — "연봉 계산하기"/"기록 남기기" 등.
-          // generic "시작하기"/"확인"은 카피 규칙 위반. onClick도 실제 첫 화면 경로로.
-          <Button variant="fill" display="block" onClick={() => navigate('/')}>
-            첫 결과 보기
-          </Button>
-        }
-        testId="home-hero"
+        testId="networth-hero"
+        label="현재 순자산"
+        value={<CountUp value={netWorth} unit="원" typography="t2" />}
+        caption={momDelta !== null ? formatMomDelta(momDelta, netWorth) : undefined}
       />
 
-      <Spacing size={24} />
+      {last6.length >= 2 ? <Sparkline data={last6} /> : null}
 
-      <CheckInBanner />
+      <Spacing size={16} />
 
-      <Spacing size={24} />
-
-      {/* 핵심 정보는 Card로 묶기(raw div 금지) — 위계 생성 */}
-      <Card testId="home-highlights">
-        {HIGHLIGHTS.map((h, idx) => (
+      <Card testId="category-card">
+        <Paragraph.Text typography="t4">카테고리 비중</Paragraph.Text>
+        <Spacing size={12} />
+        {ASSET_CATEGORIES.map((category) => (
           <ListRow
-            key={idx}
-            contents={<ListRow.Texts type="2RowTypeA" top={h.title} bottom={h.description} />}
+            key={category}
+            data-testid={`category-row-${category}`}
+            onClick={() => goAssets(category)}
+            contents={
+              <ListRow.Texts
+                type="2RowTypeA"
+                top={CATEGORY_LABEL[category]}
+                bottom={`${summary?.categoryRatio[category] ?? 0}%`}
+              />
+            }
+            right={<MiniBar ratio={(summary?.categoryRatio[category] ?? 0) / 100} />}
           />
         ))}
       </Card>
 
-      <Spacing size={16} />
-
-      <GoalMiniCard />
-
-      <Spacing size={16} />
-
-      <AdSlot adGroupId={import.meta.env.VITE_TOSS_AD_GROUP_ID} />
-
       <Spacing size={24} />
 
-      <BadgeCelebrationSheet />
+      <FloatingTabBar items={TAB_ITEMS} />
     </ScreenScaffold>
   );
 }
