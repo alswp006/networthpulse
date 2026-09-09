@@ -77,6 +77,20 @@ const SAMPLE_ASSETS: Asset[] = [
   makeAsset("loan", 50_000_000),
 ];
 
+// Home이 useAppData()에서 구조분해하는 필드 전체 — CheckInBanner/GoalMiniCard/BadgeCelebrationSheet가
+// meta/goal/newBadges/checkIn/consumeBadge를 요구하므로 기본값을 채워 항상 완전한 shape을 반환한다.
+function baseHomeData(overrides: Record<string, unknown>) {
+  return {
+    meta: { lastCheckInAt: new Date().toISOString(), reportUnlockedMonth: null, schemaVersion: 1 },
+    goal: null,
+    badges: [],
+    newBadges: [],
+    checkIn: vi.fn(),
+    consumeBadge: vi.fn(),
+    ...overrides,
+  };
+}
+
 beforeEach(() => {
   mockUseAppData.mockReset();
   mockNavigate.mockClear();
@@ -85,12 +99,12 @@ beforeEach(() => {
 
 describe("홈 대시보드 — hero · 카테고리 Card · 빈/로딩", () => {
   it("AC-1[P0]: loaded===false면 Skeleton(히어로 height 96 1개 + 카테고리 3개)만 보이고 숫자는 렌더되지 않는다", () => {
-    mockUseAppData.mockReturnValue({
+    mockUseAppData.mockReturnValue(baseHomeData({
       loaded: false,
       assets: [],
       summary: undefined,
       snapshots: [],
-    });
+    }));
 
     renderWithRouter(React.createElement(Home));
 
@@ -101,21 +115,21 @@ describe("홈 대시보드 — hero · 카테고리 Card · 빈/로딩", () => {
   });
 
   it("AC-1[P0]: loaded===true로 바뀌면 Skeleton 대신 실제 숫자가 나타난다", () => {
-    mockUseAppData.mockReturnValue({
+    mockUseAppData.mockReturnValue(baseHomeData({
       loaded: false,
       assets: [],
       summary: undefined,
       snapshots: [],
-    });
+    }));
     const { rerender } = renderWithRouter(React.createElement(Home));
     expect(screen.getByTestId("hero-skeleton")).toBeInTheDocument();
 
-    mockUseAppData.mockReturnValue({
+    mockUseAppData.mockReturnValue(baseHomeData({
       loaded: true,
       assets: SAMPLE_ASSETS,
       summary: makeSummary(200_000_000, null),
       snapshots: [],
-    });
+    }));
     rerender(React.createElement(Home));
 
     expect(screen.queryByTestId("hero-skeleton")).toBeNull();
@@ -123,12 +137,12 @@ describe("홈 대시보드 — hero · 카테고리 Card · 빈/로딩", () => {
   });
 
   it("AC-2: 자산 0건이면 EmptyState + '자산 추가하기' 전체폭 CTA가 보이고 카테고리 Card는 렌더되지 않는다", () => {
-    mockUseAppData.mockReturnValue({
+    mockUseAppData.mockReturnValue(baseHomeData({
       loaded: true,
       assets: [],
       summary: makeSummary(0, null),
       snapshots: [],
-    });
+    }));
 
     renderWithRouter(React.createElement(Home));
 
@@ -139,12 +153,12 @@ describe("홈 대시보드 — hero · 카테고리 Card · 빈/로딩", () => {
   });
 
   it("AC-3[P0]: 자산이 있으면 순자산이 3자리 콤마+원으로, 전월 대비 델타가 '+20,000,000원 (+11.1%)' 형식으로 표시된다", () => {
-    mockUseAppData.mockReturnValue({
+    mockUseAppData.mockReturnValue(baseHomeData({
       loaded: true,
       assets: SAMPLE_ASSETS,
       summary: makeSummary(200_000_000, 20_000_000),
       snapshots: [makeSnapshot("2026-07", 180_000_000), makeSnapshot("2026-08", 200_000_000)],
-    });
+    }));
 
     const { container } = renderWithRouter(React.createElement(Home));
 
@@ -153,12 +167,12 @@ describe("홈 대시보드 — hero · 카테고리 Card · 빈/로딩", () => {
   });
 
   it("AC-3[P0]: 전월 스냅샷이 없어 momDelta가 null이면 대비 Chip 문구가 렌더되지 않는다", () => {
-    mockUseAppData.mockReturnValue({
+    mockUseAppData.mockReturnValue(baseHomeData({
       loaded: true,
       assets: SAMPLE_ASSETS,
       summary: makeSummary(200_000_000, null),
       snapshots: [makeSnapshot("2026-08", 200_000_000)],
-    });
+    }));
 
     const { container } = renderWithRouter(React.createElement(Home));
 
@@ -167,33 +181,33 @@ describe("홈 대시보드 — hero · 카테고리 Card · 빈/로딩", () => {
   });
 
   it("AC-4: 스냅샷이 2개 미만이면 Sparkline이 없고, 2개 이상이면 렌더된다", () => {
-    mockUseAppData.mockReturnValue({
+    mockUseAppData.mockReturnValue(baseHomeData({
       loaded: true,
       assets: SAMPLE_ASSETS,
       summary: makeSummary(200_000_000, null),
       snapshots: [makeSnapshot("2026-08", 200_000_000)],
-    });
+    }));
     const { unmount } = renderWithRouter(React.createElement(Home));
     expect(screen.queryByRole("img", { name: "추이 그래프" })).toBeNull();
     unmount();
 
-    mockUseAppData.mockReturnValue({
+    mockUseAppData.mockReturnValue(baseHomeData({
       loaded: true,
       assets: SAMPLE_ASSETS,
       summary: makeSummary(200_000_000, 20_000_000),
       snapshots: [makeSnapshot("2026-07", 180_000_000), makeSnapshot("2026-08", 200_000_000)],
-    });
+    }));
     renderWithRouter(React.createElement(Home));
     expect(screen.getByRole("img", { name: "추이 그래프" })).toBeInTheDocument();
   });
 
   it("AC-5: 카테고리 행 탭 시 navigate('/assets', { state: { filterCategory } })와 haptic tickWeak가 호출된다", () => {
-    mockUseAppData.mockReturnValue({
+    mockUseAppData.mockReturnValue(baseHomeData({
       loaded: true,
       assets: SAMPLE_ASSETS,
       summary: makeSummary(200_000_000, null),
       snapshots: [],
-    });
+    }));
 
     renderWithRouter(React.createElement(Home));
 

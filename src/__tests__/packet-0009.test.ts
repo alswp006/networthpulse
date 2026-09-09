@@ -233,7 +233,18 @@ describe("홈 — 체크인 배너 · 목표 미니 카드 · 뱃지 축하 Bott
           meta: makeMeta({ lastCheckInAt: daysAgoISO(0) }),
           goal: null,
           newBadges: [],
-          summary: makeSummary(0),
+          assets: [
+            {
+              id: "deposit-1",
+              name: "예금자산",
+              category: "deposit" as AssetCategory,
+              amount: 100_000_000,
+              memo: "",
+              createdAt: "2026-08-01T00:00:00.000Z",
+              updatedAt: "2026-08-01T00:00:00.000Z",
+            },
+          ],
+          summary: makeSummary(100_000_000),
         }),
       );
 
