@@ -12,14 +12,35 @@ import { test, expect, type Page } from "@playwright/test";
  */
 const ROUTES: { path: string; name: string }[] = [
   { path: "/", name: "home" },
-  // { path: "/result", name: "result" },   // ← 이 앱의 라우트를 추가
-  // { path: "/settings", name: "settings" },
+  { path: "/assets", name: "assets" },
 ];
 
 /** 데이터가 필요한 화면용 localStorage 시드(앱에 맞게 채워라). 앱 스크립트보다 먼저 실행된다. */
 async function seed(page: Page): Promise<void> {
   await page.addInitScript(() => {
-    // window.localStorage.setItem("MY_STORAGE_KEY", JSON.stringify({ /* ... */ }));
+    window.localStorage.setItem(
+      "nwp:assets:v1",
+      JSON.stringify([
+        {
+          id: "a1",
+          name: "월급통장",
+          category: "deposit",
+          amount: 3200000,
+          memo: "",
+          createdAt: "2026-01-01T00:00:00.000Z",
+          updatedAt: "2026-01-01T00:00:00.000Z",
+        },
+        {
+          id: "a2",
+          name: "삼성전자",
+          category: "stock",
+          amount: 1500000,
+          memo: "적립식",
+          createdAt: "2026-01-01T00:00:00.000Z",
+          updatedAt: "2026-01-01T00:00:00.000Z",
+        },
+      ]),
+    );
   });
 }
 
