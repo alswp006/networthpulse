@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
+import type { Result } from "@/lib/types";
 import {
   createAsset,
   updateAsset,
@@ -6,6 +7,17 @@ import {
   listAssets,
   getAsset,
 } from "@/lib/storage/assets";
+
+// Result<T> 판별 유니온에서 실패/성공 분기를 좁혀 꺼내는 테스트 헬퍼
+function unwrap<T>(result: Result<T>): T {
+  if (!result.ok) throw new Error(result.error);
+  return result.data;
+}
+
+function unwrapError<T>(result: Result<T>): string {
+  if (result.ok) throw new Error("expected an error result");
+  return result.error;
+}
 
 describe("Asset CRUD 저장소 [packet 0005]", () => {
   beforeEach(() => {
@@ -27,15 +39,15 @@ describe("Asset CRUD 저장소 [packet 0005]", () => {
     const result = createAsset(input);
 
     expect(result.ok).toBe(true);
-    expect(result.data!.id).toBeTruthy();
-    expect(result.data!.id).not.toBe("");
-    expect(result.data!.name).toBe("국민은행 예금");
-    expect(result.data!.category).toBe("deposit");
-    expect(result.data!.amount).toBe(12000000);
-    expect(result.data!.memo).toBe("비상금");
-    expect(result.data!.createdAt).toBe(result.data!.updatedAt);
+    expect(unwrap(result).id).toBeTruthy();
+    expect(unwrap(result).id).not.toBe("");
+    expect(unwrap(result).name).toBe("국민은행 예금");
+    expect(unwrap(result).category).toBe("deposit");
+    expect(unwrap(result).amount).toBe(12000000);
+    expect(unwrap(result).memo).toBe("비상금");
+    expect(unwrap(result).createdAt).toBe(unwrap(result).updatedAt);
     expect(listAssets()).toHaveLength(1);
-    expect(listAssets()[0].id).toBe(result.data!.id);
+    expect(listAssets()[0].id).toBe(unwrap(result).id);
   });
 
   // ============================================================================
@@ -50,9 +62,9 @@ describe("Asset CRUD 저장소 [packet 0005]", () => {
     });
 
     expect(created.ok).toBe(true);
-    const id = created.data!.id;
-    const originalCreatedAt = created.data!.createdAt;
-    const originalUpdatedAt = created.data!.updatedAt;
+    const id = unwrap(created).id;
+    const originalCreatedAt = unwrap(created).createdAt;
+    const originalUpdatedAt = unwrap(created).updatedAt;
 
     // 약간의 시간 경과 (시간 테스트용)
     vi.useFakeTimers();
@@ -61,11 +73,11 @@ describe("Asset CRUD 저장소 [packet 0005]", () => {
     const updated = updateAsset(id, { amount: 7000000 });
 
     expect(updated.ok).toBe(true);
-    expect(updated.data!.id).toBe(id);
-    expect(updated.data!.amount).toBe(7000000);
-    expect(updated.data!.name).toBe("국민은행 예금"); // 변경 안 한 필드는 유지
-    expect(updated.data!.createdAt).toBe(originalCreatedAt); // createdAt은 변경 안 됨
-    expect(updated.data!.updatedAt).toBeGreaterThan(originalUpdatedAt);
+    expect(unwrap(updated).id).toBe(id);
+    expect(unwrap(updated).amount).toBe(7000000);
+    expect(unwrap(updated).name).toBe("국민은행 예금"); // 변경 안 한 필드는 유지
+    expect(unwrap(updated).createdAt).toBe(originalCreatedAt); // createdAt은 변경 안 됨
+    expect(unwrap(updated).updatedAt > originalUpdatedAt).toBe(true);
 
     vi.useRealTimers();
   });
@@ -79,12 +91,12 @@ describe("Asset CRUD 저장소 [packet 0005]", () => {
     });
 
     expect(created.ok).toBe(true);
-    const id = created.data!.id;
+    const id = unwrap(created).id;
 
     const deleteResult = deleteAsset(id);
 
     expect(deleteResult.ok).toBe(true);
-    expect(deleteResult.data!.id).toBe(id);
+    expect(unwrap(deleteResult).id).toBe(id);
     expect(listAssets()).toHaveLength(0);
   });
 
@@ -100,7 +112,7 @@ describe("Asset CRUD 저장소 [packet 0005]", () => {
     });
 
     expect(result.ok).toBe(false);
-    expect(result.error).toBe("이름과 금액을 확인해주세요");
+    expect(unwrapError(result)).toBe("이름과 금액을 확인해주세요");
     expect(listAssets()).toHaveLength(0);
   });
 
@@ -113,7 +125,7 @@ describe("Asset CRUD 저장소 [packet 0005]", () => {
     });
 
     expect(result.ok).toBe(false);
-    expect(result.error).toBe("이름과 금액을 확인해주세요");
+    expect(unwrapError(result)).toBe("이름과 금액을 확인해주세요");
     expect(listAssets()).toHaveLength(0);
   });
 
@@ -126,7 +138,7 @@ describe("Asset CRUD 저장소 [packet 0005]", () => {
     });
 
     expect(result.ok).toBe(false);
-    expect(result.error).toBe("이명과 금액을 확인해주세요");
+    expect(unwrapError(result)).toBe("이름과 금액을 확인해주세요");
     expect(listAssets()).toHaveLength(0);
   });
 
@@ -139,8 +151,8 @@ describe("Asset CRUD 저장소 [packet 0005]", () => {
     });
 
     expect(result.ok).toBe(false);
-    expect(result.error).toContain("이름");
-    expect(result.error).toContain("20");
+    expect(unwrapError(result)).toContain("이름");
+    expect(unwrapError(result)).toContain("20");
     expect(listAssets()).toHaveLength(0);
   });
 
@@ -153,7 +165,7 @@ describe("Asset CRUD 저장소 [packet 0005]", () => {
     });
 
     expect(result.ok).toBe(false);
-    expect(result.error).toContain("금액");
+    expect(unwrapError(result)).toContain("금액");
     expect(listAssets()).toHaveLength(0);
   });
 
@@ -183,7 +195,7 @@ describe("Asset CRUD 저장소 [packet 0005]", () => {
     });
 
     expect(result.ok).toBe(false);
-    expect(result.error).toBe("자산은 최대 200개까지 등록할 수 있어요");
+    expect(unwrapError(result)).toBe("자산은 최대 200개까지 등록할 수 있어요");
     expect(listAssets()).toHaveLength(200);
   });
 
@@ -200,32 +212,30 @@ describe("Asset CRUD 저장소 [packet 0005]", () => {
     });
 
     expect(created.ok).toBe(true);
-    const id = created.data!.id;
+    const id = unwrap(created).id;
 
     // 깊은 복사로 기존 상태 저장
     const originalAssets = JSON.parse(JSON.stringify(listAssets()));
 
-    // localStorage.setItem을 일시적으로 에러로 만듦 (quota 시뮬레이션)
-    const originalSetItem = localStorage.setItem;
-    let callCount = 0;
-    localStorage.setItem = vi.fn((key: string, value: string) => {
-      callCount++;
-      // 첫 번째 호출(데이터 저장)은 성공, 두 번째 이후는 실패
-      if (callCount > 1) {
-        throw new Error("QuotaExceededError");
-      }
-      originalSetItem.call(localStorage, key, value);
-    });
+    // localStorage.setItem을 quota 초과 에러로 시뮬레이션
+    // 주의: jsdom의 Storage는 Proxy 기반이라 `localStorage.setItem = vi.fn()` 같은 직접 대입은
+    // 메서드를 가리지 못하고 조용히 무시된다 — Storage.prototype을 spyOn해야 실제로 가로챈다.
+    const spy = vi
+      .spyOn(Storage.prototype, "setItem")
+      .mockImplementation(() => {
+        throw new DOMException("The quota has been exceeded.", "QuotaExceededError");
+      });
 
     // 금액 초과로 인한 검증 실패도 고려 — 실제로는 검증에서 걸릴 수 있으므로,
     // 여기서는 단순히 update 후 write 실패 케이스만 테스트
     const result = updateAsset(id, { amount: 5000 });
+    expect(result.ok).toBe(false);
+
+    spy.mockRestore();
 
     // write 실패 시: 기존 데이터가 깊은 비교로 불변이어야 함
     const currentAssets = listAssets();
     expect(JSON.parse(JSON.stringify(currentAssets))).toEqual(originalAssets);
-
-    localStorage.setItem = originalSetItem;
   });
 
   // ============================================================================
@@ -235,7 +245,7 @@ describe("Asset CRUD 저장소 [packet 0005]", () => {
     const result = updateAsset("non-existent-id-xyz", { amount: 5000 });
 
     expect(result.ok).toBe(false);
-    expect(result.error).toBe("항목을 찾을 수 없어요");
+    expect(unwrapError(result)).toBe("항목을 찾을 수 없어요");
   });
 
   it("AC-6[P0]: should return null for getAsset with non-existent id (no throw)", () => {
@@ -248,7 +258,7 @@ describe("Asset CRUD 저장소 [packet 0005]", () => {
     const result = deleteAsset("non-existent-id-xyz");
 
     expect(result.ok).toBe(false);
-    expect(result.error).toBe("항목을 찾을 수 없어요");
+    expect(unwrapError(result)).toBe("항목을 찾을 수 없어요");
   });
 
   // ============================================================================
@@ -263,7 +273,7 @@ describe("Asset CRUD 저장소 [packet 0005]", () => {
     });
 
     expect(result.ok).toBe(true);
-    expect(result.data!.name).toBe("국민은행 예금");
+    expect(unwrap(result).name).toBe("국민은행 예금");
   });
 
   it("should trim whitespace from name on update", () => {
@@ -274,11 +284,11 @@ describe("Asset CRUD 저장소 [packet 0005]", () => {
       memo: "",
     });
 
-    const updated = updateAsset(created.data!.id, {
+    const updated = updateAsset(unwrap(created).id, {
       name: "  수정됨  ",
     });
 
     expect(updated.ok).toBe(true);
-    expect(updated.data!.name).toBe("수정됨");
+    expect(unwrap(updated).name).toBe("수정됨");
   });
 });
