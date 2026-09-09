@@ -9,6 +9,10 @@ import { Sparkline } from '../components/Sparkline';
 import { MiniBar } from '../components/MiniBar';
 import { EmptyState } from '../components/StateView';
 import { FloatingTabBar } from '../components/FloatingTabBar';
+import { AdSlot } from '../components/AdSlot';
+import { CheckInBanner } from '../components/CheckInBanner';
+import { GoalMiniCard } from '../components/GoalMiniCard';
+import { BadgeCelebrationSheet } from '../components/BadgeCelebrationSheet';
 import { useAppData } from '@/lib/store';
 import { ASSET_CATEGORIES, CATEGORY_LABEL } from '@/lib/types';
 import type { AssetCategory } from '@/lib/types';
@@ -104,38 +108,52 @@ export default function Home() {
 
   return (
     <ScreenScaffold top={top}>
-      <SummaryHero
-        testId="networth-hero"
-        label="현재 순자산"
-        value={<CountUp value={netWorth} unit="원" typography="t2" />}
-        caption={momDelta !== null ? formatMomDelta(momDelta, netWorth) : undefined}
-      />
+      <div data-testid="home-highlights">
+        <SummaryHero
+          testId="networth-hero"
+          label="현재 순자산"
+          value={<CountUp value={netWorth} unit="원" typography="t2" />}
+          caption={momDelta !== null ? formatMomDelta(momDelta, netWorth) : undefined}
+        />
 
-      {last6.length >= 2 ? <Sparkline data={last6} /> : null}
+        {last6.length >= 2 ? <Sparkline data={last6} /> : null}
+
+        <Spacing size={16} />
+
+        <CheckInBanner />
+        <Spacing size={16} />
+
+        <GoalMiniCard />
+        <Spacing size={16} />
+
+        <Card testId="category-card">
+          <Paragraph.Text typography="t4">카테고리 비중</Paragraph.Text>
+          <Spacing size={12} />
+          {ASSET_CATEGORIES.map((category) => (
+            <ListRow
+              key={category}
+              data-testid={`category-row-${category}`}
+              onClick={() => goAssets(category)}
+              contents={
+                <ListRow.Texts
+                  type="2RowTypeA"
+                  top={CATEGORY_LABEL[category]}
+                  bottom={`${summary?.categoryRatio[category] ?? 0}%`}
+                />
+              }
+              right={<MiniBar ratio={(summary?.categoryRatio[category] ?? 0) / 100} />}
+            />
+          ))}
+        </Card>
+      </div>
 
       <Spacing size={16} />
 
-      <Card testId="category-card">
-        <Paragraph.Text typography="t4">카테고리 비중</Paragraph.Text>
-        <Spacing size={12} />
-        {ASSET_CATEGORIES.map((category) => (
-          <ListRow
-            key={category}
-            data-testid={`category-row-${category}`}
-            onClick={() => goAssets(category)}
-            contents={
-              <ListRow.Texts
-                type="2RowTypeA"
-                top={CATEGORY_LABEL[category]}
-                bottom={`${summary?.categoryRatio[category] ?? 0}%`}
-              />
-            }
-            right={<MiniBar ratio={(summary?.categoryRatio[category] ?? 0) / 100} />}
-          />
-        ))}
-      </Card>
+      <AdSlot adGroupId={import.meta.env.VITE_TOSS_AD_GROUP_ID} />
 
       <Spacing size={24} />
+
+      <BadgeCelebrationSheet />
 
       <FloatingTabBar items={TAB_ITEMS} />
     </ScreenScaffold>
