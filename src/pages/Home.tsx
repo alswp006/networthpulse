@@ -3,6 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { ScreenScaffold } from '../components/ScreenScaffold';
 import { SummaryHero } from '../components/SummaryHero';
 import { Card } from '../components/Card';
+import { CheckInBanner } from '../components/CheckInBanner';
+import { GoalMiniCard } from '../components/GoalMiniCard';
+import { BadgeCelebrationSheet } from '../components/BadgeCelebrationSheet';
+import { AdSlot } from '../components/AdSlot';
+import { useAppData } from '@/lib/store';
 
 /**
  * Golden Home page — 대시보드/탭-루트 골든 레퍼런스.
@@ -57,6 +62,10 @@ export default function Home() {
 
       <Spacing size={24} />
 
+      <CheckInBanner />
+
+      <Spacing size={24} />
+
       {/* 핵심 정보는 Card로 묶기(raw div 금지) — 위계 생성 */}
       <Card testId="home-highlights">
         {HIGHLIGHTS.map((h, idx) => (
@@ -67,7 +76,17 @@ export default function Home() {
         ))}
       </Card>
 
+      <Spacing size={16} />
+
+      <GoalMiniCard />
+
+      <Spacing size={16} />
+
+      <AdSlot adGroupId={import.meta.env.VITE_TOSS_AD_GROUP_ID} />
+
       <Spacing size={24} />
+
+      <BadgeCelebrationSheet />
     </ScreenScaffold>
   );
 }

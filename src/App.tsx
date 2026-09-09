@@ -4,6 +4,7 @@
 // 화면 패킷: 이 파일을 건드리지 마라 — 자기 페이지 파일(자리 페이지)만 통째로 교체한다.
 import { lazy, Suspense } from 'react';
 import { Routes, Route } from 'react-router-dom';
+import { AppDataProvider } from './lib/store';
 import Home from './pages/Home';
 import Assets from './pages/Assets';
 import AssetNew from './pages/AssetNew';
@@ -24,26 +25,28 @@ const DevTdsGallery = import.meta.env.DEV
 export default function App() {
   return (
     // @ai-factory:providers — 전역 Provider는 <Routes>를 감싸는 이 자리에 둔다(main.tsx는 @AI:ANCHOR, 수정 금지).
-    <Routes>
-      <Route path="/" element={<Home />} />
-      <Route path="/assets" element={<Assets />} />
-      <Route path="/assets/new" element={<AssetNew />} />
-      <Route path="/assets/:id/edit" element={<AssetEdit />} />
-      <Route path="/trend" element={<Trend />} />
-      <Route path="/report" element={<Report />} />
-      <Route path="/goal" element={<Goal />} />
-      <Route path="/badges" element={<Badges />} />
-      <Route path="*" element={<NotFound />} />
-      {DevTdsGallery && (
-        <Route
-          path="/__tds-gallery"
-          element={
-            <Suspense fallback={null}>
-              <DevTdsGallery />
-            </Suspense>
-          }
-        />
-      )}
-    </Routes>
+    <AppDataProvider>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/assets" element={<Assets />} />
+        <Route path="/assets/new" element={<AssetNew />} />
+        <Route path="/assets/:id/edit" element={<AssetEdit />} />
+        <Route path="/trend" element={<Trend />} />
+        <Route path="/report" element={<Report />} />
+        <Route path="/goal" element={<Goal />} />
+        <Route path="/badges" element={<Badges />} />
+        <Route path="*" element={<NotFound />} />
+        {DevTdsGallery && (
+          <Route
+            path="/__tds-gallery"
+            element={
+              <Suspense fallback={null}>
+                <DevTdsGallery />
+              </Suspense>
+            }
+          />
+        )}
+      </Routes>
+    </AppDataProvider>
   );
 }
