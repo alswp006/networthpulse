@@ -233,6 +233,7 @@ export type
 - calc/summary.ts: export function computeSummary( assets: Asset[], prev?: NetWorthSnapshot ): NetWorthSummary; export function calculateNetWorth( assets: Asset[] ):
 - contract.ts: export type Asset =; export type Snapshot =; export type Goal =; export type Badge =; export type RouteState = 'home' | 'assets' | 'trend' | 'report' | 'goal' | 'badges'; export type ASSET_CATEGORIESFn = readonly string[]; export type BADGE_MILESTONESFn = readonly number[]; export type readStorageFn = (key: string) => Promise<any>
 - format.ts: export function formatKRW(amount: number): string; export function formatCompactKRW(amount: number): string; export function formatSignedKRW(amount: number): string; export function formatPercent(value: number): string; export function formatPercentage( rate: number, opts?:
+- storage/assets.ts: export function listAssets(): Asset[]; export function getAsset(id: string): Asset | null; export function createAsset(input: AssetInput): Result<Asset>; export function updateAsset(id: string, patch: Partial<AssetInput>): Result<Asset>; export function deleteAsset(id: string): Result<
 - storage/core.ts: export function safeRead<T = any>(key: string, fallback: NoInfer<T>): T; export function safeWrite<T>(key: string, value: T): Result<null>; export function uid(): string; export function nowISO(): string; export function currentMonth(): string; export async function readStorage(key: string): Promise<any>; export async function writeStorage(key: string, data: any): Promise<void>; export async function deleteStorage(key: string): Promise<void>
 - storage.ts: export function getItem<T>(key: string): T | null; export function setItem<T>(key: string, value: T): void; export function removeItem(key: string): void
 - types.ts: export type AssetCategory = 'deposit' | 'stock' | 'realestate' | 'loan'; export const ASSET_CATEGORIES: readonly AssetCategory[] = ['deposit', 'stock', 'realestate', 'loan'] as const; export const CATEGORY_LABEL: Record<AssetCategory, string> =; export const LIABILITY_CATEGORIES: AssetCategory[] = ['loan']; export const AMOUNT_MIN = 1; export const AMOUNT_MAX = 999_999_999_999; export const ASSET_MAX_COUNT = 200; export const SNAPSHOT_MAX_COUNT = 60
@@ -260,6 +261,7 @@ CRITICAL: Before creating any new function, type, or component, check the list a
 - 0002: 저장소 코어 유틸 (안전 read/write, ID 폴백) (files: src/lib/storage/core.ts)
 - 0003: 순자산 계산 · 금액 포맷터 (순수 함수) (files: src/lib/calc/summary.ts, src/lib/format.ts)
 - 0004: 자산배분 진단 룰 엔진 (결정론적) (files: src/lib/calc/diagnose.ts)
+- 0005: Asset CRUD 저장소 (files: src/lib/storage/assets.ts)
 
 ## Available exports from existing files
 // src/App.tsx

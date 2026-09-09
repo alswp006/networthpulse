@@ -63,10 +63,12 @@ describe('AC-1: Snapshot upsert & eviction', () => {
   });
 
   it('should maintain max 60 snapshots and remove oldest when exceeding', () => {
-    // 61개 upsert 후 → 길이 60, 가장 오래된 month 제거됨
+    // 61개 upsert 후 → 길이 60, 가장 오래된 month 제거됨 (연도를 넘겨 61개월 모두 고유해야 함)
     for (let i = 0; i < 61; i++) {
+      const year = 2020 + Math.floor(i / 12);
+      const month = (i % 12) + 1;
       upsertSnapshot({
-        month: `2020-${String((i % 12) + 1).padStart(2, '0')}`,
+        month: `${year}-${String(month).padStart(2, '0')}`,
         totalAssets: 100_000_000 + i * 1_000_000,
         totalLiabilities: 0,
         netWorth: 100_000_000 + i * 1_000_000,
@@ -98,7 +100,7 @@ describe('AC-1: Snapshot upsert & eviction', () => {
     });
 
     const stored = listSnapshots(60);
-    expect(stored[0].month).toBeLessThanOrEqual(stored[1].month); // 오름차순
+    expect(stored[0].month <= stored[1].month).toBe(true); // 오름차순 (month는 문자열)
   });
 });
 
