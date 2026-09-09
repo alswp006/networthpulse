@@ -136,6 +136,13 @@ export const DIAGNOSIS_RULE_IDS = [
 
 export type DiagnosisRuleId = (typeof DIAGNOSIS_RULE_IDS)[number];
 
+export interface DiagnosisItem {
+  id: DiagnosisRuleId;
+  title: string;
+  description: string;
+  tone: 'warn' | 'good' | 'info';
+}
+
 // ── 스토리지 키 ────────────────────────────────────────────────
 
 export const STORAGE_KEYS = {
